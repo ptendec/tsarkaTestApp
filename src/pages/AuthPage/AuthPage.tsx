@@ -14,8 +14,8 @@ const AuthPage: FC = () => {
     const dispatch = useAppDispatch()
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isEmailIncorrect, setIsEmailIncorrect] = useState(false)
-    const [isPasswordIncorrect, setIsPasswordIncorrect] = useState(false)
+    const [isEmailIncorrect, setIsEmailIncorrect] = useState<boolean>(false)
+    const [isPasswordIncorrect, setIsPasswordIncorrect] = useState<boolean>(false)
     const navigate = useNavigate()
     const isAuth = useSelector((state: RootState) => state.user.isAuth)
     if (isAuth) return <Navigate to={'/'}/>

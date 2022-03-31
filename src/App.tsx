@@ -11,16 +11,16 @@ function App() {
     const dispatch = useAppDispatch()
     const accessToken = localStorage.getItem('accessToken')
     if (accessToken) {
-        fetchIntercept({query: `query {
+        fetchIntercept({
+            query: `query {
                                         viewer {
                                             id,
                                             email,
                                         }
                                      }`
-        }).then(response => response.json())
-            .then(data => {
-                dispatch(setUser({email: data.data.viewer.email, id: data.data.viewer.id}))
-            })
+        }).then(({response, data}) => {
+            dispatch(setUser({email: data.data.viewer.email, id: data.data.viewer.id}))
+        })
     } else {
         dispatch(removeUser({email: ''}))
     }
