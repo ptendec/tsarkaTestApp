@@ -1,4 +1,4 @@
-import React, {FC, useState} from 'react';
+import React, {FC, useEffect, useState} from 'react';
 import {LockClosedIcon} from '@heroicons/react/solid'
 import classes from './AuthPage.module.css'
 import {API_URL} from "../../utils/consts";
@@ -14,10 +14,16 @@ const AuthPage: FC = () => {
     const dispatch = useAppDispatch()
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isEmailIncorrect, setIsEmailIncorrect] = useState<boolean>(false)
-    const [isPasswordIncorrect, setIsPasswordIncorrect] = useState<boolean>(false)
+    const [isEmailIncorrect, setIsEmailIncorrect] = useState(false)
+    const [isPasswordIncorrect, setIsPasswordIncorrect] = useState(false)
+    const [isInvalidCredentials, setIsInvalidCredentials] = useState(false)
     const navigate = useNavigate()
     const isAuth = useSelector((state: RootState) => state.user.isAuth)
+    useEffect(() => {
+        setIsPasswordIncorrect(false)
+        setIsEmailIncorrect(false)
+        setIsInvalidCredentials(false)
+    }, [])
     if (isAuth) return <Navigate to={'/'}/>
     const authorizeUser = ({event}: { event: any }) => {
         event.preventDefault()
@@ -25,10 +31,12 @@ const AuthPage: FC = () => {
             setIsEmailIncorrect(true)
             return;
         }
+        setIsEmailIncorrect(false)
         if (!validatePassword(password)) {
             setIsPasswordIncorrect(true)
             return;
         }
+        setIsPasswordIncorrect(false)
         fetch(API_URL, {
             method: 'POST',
             headers: {
@@ -56,24 +64,36 @@ const AuthPage: FC = () => {
         }).then((response) => {
             return response.json()
         }).then(data => {
-            console.log(data)
-            localStorage.setItem('accessToken', data.data.users.login.token.accessToken)
-            localStorage.setItem('refreshToken', data.data.users.login.token.refreshToken)
-            dispatch(setUser({email: 'user@example.com'}))
-            navigate('/')
+            if (data.data.users?.login !== null) {
+                console.log(data)
+                localStorage.setItem('accessToken', data.data.users.login.token.accessToken)
+                localStorage.setItem('refreshToken', data.data.users.login.token.refreshToken)
+                // CHECKME Было бы круто, если бы в токене содержались данные, по типу его id и email, можно было бы его декодировать и сохранить в хранилище redux
+                dispatch(setUser({email}))
+                navigate('/')
+            } else {
+                console.log("incorrect")
+                setIsInvalidCredentials(true)
+            }
         }).catch(error => {
             console.log(error)
         })
-
     }
+
     return (
         <div className={classes.authPage + ' py-20'}>
-            {
-                isEmailIncorrect ? <WarningToast message={'Введите корректный email'} /> : ''
-            },
-            {
-                isPasswordIncorrect ? <WarningToast message={'Введите корректный пароль'} /> : ''
-            }
+            <div className={classes.toasts}>
+                {
+                    isEmailIncorrect ? <WarningToast message={'Введите корректный email'}/> : ''
+                }
+                {
+                    isPasswordIncorrect ? <WarningToast
+                        message={'Пароль должен включать в себя, как минимум 1 цифру, 1 символ и длина должна быть не меньше 8'}/> : ''
+                }
+                {
+                    isInvalidCredentials ? <WarningToast message={'Вы ввели неправильный email или пароль'}/> : ''
+                }
+            </div>
             <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 w-full">
                 <div className="max-w-lg w-full space-y-8">
                     <div>
